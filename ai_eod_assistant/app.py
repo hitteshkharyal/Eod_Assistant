@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from datetime import date, datetime, time
 from pathlib import Path
 import sys
+import subprocess
 from typing import Iterator
 
 import streamlit as st
@@ -252,6 +253,20 @@ def render_add_activity() -> None:
 def render_workspace_monitor() -> None:
     st.header("Workspace activity")
     st.info("This scanner runs only when you click it and reads only the folder you choose. It tracks file modification metadata, not keystrokes, clipboard, screen content, or application windows.")
+    connector_process = st.session_state.get("connector_process")
+    if connector_process and connector_process.poll() is None:
+        st.success("Local connector is running on this computer.", icon=":material/check_circle:")
+    elif st.button("Start local connector", icon=":material/play_arrow:", help="Starts the connector on the machine running Streamlit."):
+        try:
+            st.session_state["connector_process"] = subprocess.Popen(
+                [sys.executable, "-m", "ai_eod_assistant.local_connector"],
+                cwd=Path(__file__).resolve().parent.parent,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            st.success("Local connector started. Scan your workspace now.")
+        except OSError as exc:
+            st.error(f"Could not start the local connector: {exc}")
     default_path = str(Path.cwd())
     workspace_path = st.text_input("Workspace folder", value=st.session_state.get("workspace_path", default_path), key="workspace_path")
     since_date = st.date_input("Find files modified since", value=date.today(), key="workspace_since")

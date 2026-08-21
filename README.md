@@ -91,6 +91,8 @@ The connector also exposes `/scan`. In the hosted app, each user must run the co
 python -m ai_eod_assistant.local_connector
 ```
 
+In a local Streamlit run, the **Start local connector** button on **Workspace activity** can launch this command automatically. A button in Streamlit Cloud cannot launch a terminal on a remote user's computer; use the command above or a separately installed local connector for that case.
+
 For a local app, use `http://127.0.0.1:8765`. For a hosted app, `127.0.0.1` points to the cloud server; use a private VPN connector address or run the app locally on the same device instead.
 
 The cloud app still saves the completed EOD to Supabase PostgreSQL. For the hosted Streamlit UI to invoke a user's connector, the connector URL must be reachable from the deployment through a private network, or a browser-side connector bridge must be added. A plain `127.0.0.1` URL entered in Streamlit Cloud points to the cloud server, not the user's computer.
