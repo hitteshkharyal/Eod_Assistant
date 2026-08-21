@@ -87,6 +87,8 @@ The connector forwards `/generate` requests to the user's Ollama server. Keep it
 
 The cloud app still saves the completed EOD to Supabase PostgreSQL. For the hosted Streamlit UI to invoke a user's connector, the connector URL must be reachable from the deployment through a private network, or a browser-side connector bridge must be added. A plain `127.0.0.1` URL entered in Streamlit Cloud points to the cloud server, not the user's computer.
 
+When using a private VPN connector, enter its connector URL (for example `http://100.x.x.x:8765`) in the app's **Settings -> Ollama server URL**. The connector accepts Ollama's standard `/api/generate` path, so the existing Offline (Ollama) provider can forward prompts through it and save the resulting EOD in PostgreSQL.
+
 ## Deploy to Streamlit Community Cloud
 
 This is the recommended free hosting path for this Streamlit app.

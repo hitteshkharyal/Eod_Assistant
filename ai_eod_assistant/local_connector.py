@@ -66,7 +66,7 @@ class ConnectorHandler(BaseHTTPRequestHandler):
         self._send(404, {"error": "Not found"})
 
     def do_POST(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler API.
-        if self.path != "/generate":
+        if self.path not in {"/generate", "/api/generate"}:
             self._send(404, {"error": "Not found"})
             return
         if CONNECTOR_TOKEN and self.headers.get("X-Connector-Token") != CONNECTOR_TOKEN:
