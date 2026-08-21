@@ -4,6 +4,8 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.*
+!.env.example
 *.db
 *.sqlite3
 ai_eod_assistant/data/*.db
