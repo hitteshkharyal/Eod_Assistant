@@ -85,6 +85,14 @@ http://127.0.0.1:8765/models
 
 The connector forwards `/generate` requests to the user's Ollama server. Keep it bound to `127.0.0.1` for local-only use. To let a private hosted deployment reach it, use a private VPN such as Tailscale and set `OLLAMA_CONNECTOR_HOST` to the private interface plus `OLLAMA_CONNECTOR_TOKEN` to a secret token. Do not expose this connector or Ollama directly to the public internet.
 
+The connector also exposes `/scan`. In the hosted app, each user must run the connector on their own device, open **Workspace activity**, enter the folder path as it exists on that device, and keep the connector running while clicking **Scan selected workspace**. The app sends the reviewed metadata to PostgreSQL with the user's account ownership. Example Windows start command:
+
+```powershell
+python -m ai_eod_assistant.local_connector
+```
+
+For a local app, use `http://127.0.0.1:8765`. For a hosted app, `127.0.0.1` points to the cloud server; use a private VPN connector address or run the app locally on the same device instead.
+
 The cloud app still saves the completed EOD to Supabase PostgreSQL. For the hosted Streamlit UI to invoke a user's connector, the connector URL must be reachable from the deployment through a private network, or a browser-side connector bridge must be added. A plain `127.0.0.1` URL entered in Streamlit Cloud points to the cloud server, not the user's computer.
 
 When using a private VPN connector, enter its connector URL (for example `http://100.x.x.x:8765`) in the app's **Settings -> Ollama server URL**. The connector accepts Ollama's standard `/api/generate` path, so the existing Offline (Ollama) provider can forward prompts through it and save the resulting EOD in PostgreSQL.

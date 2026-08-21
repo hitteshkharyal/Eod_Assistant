@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+import json
+from urllib import request
 
 IGNORED_DIRECTORY_NAMES = {".git", ".venv", "__pycache__", "node_modules", "build", "dist"}
 
@@ -95,3 +97,28 @@ def format_workspace_evidence(changes: list[WorkspaceChange]) -> str:
         f"- [{item.modified_at.isoformat()}] {item.relative_path} ({item.language_hint})" for item in changes
     )
     return "\n".join(lines)
+
+
+def scan_remote_workspace(connector_url: str, workspace_path: str, since: datetime, max_files: int = 200) -> list[WorkspaceChange]:
+    """Request an explicit local-folder scan from a reachable Ollama connector."""
+    payload = json.dumps({"workspace_path": workspace_path, "since": since.isoformat(), "max_files": max_files}).encode("utf-8")
+    call = request.Request(
+        f"{connector_url.rstrip('/')}/scan",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with request.urlopen(call, timeout=30) as response:
+        result = json.loads(response.read().decode("utf-8"))
+    if result.get("error"):
+        raise ValueError(str(result["error"]))
+    return [
+        WorkspaceChange(
+            workspace=Path(item["workspace"]),
+            project_name=str(item["project_name"]),
+            relative_path=str(item["relative_path"]),
+            modified_at=datetime.fromisoformat(str(item["modified_at"])),
+            language_hint=str(item["language_hint"]),
+        )
+        for item in result.get("changes", [])
+    ]

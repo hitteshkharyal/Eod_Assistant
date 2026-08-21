@@ -20,7 +20,7 @@ from ai_eod_assistant.ai.stt import transcribe_audio
 from ai_eod_assistant.config.settings import get_settings
 from ai_eod_assistant.backend.eod_service import EODService
 from ai_eod_assistant.database.db import get_connection, initialize_database
-from ai_eod_assistant.processing.workspace import format_workspace_evidence, scan_workspace
+from ai_eod_assistant.processing.workspace import format_workspace_evidence, scan_remote_workspace, scan_workspace
 from ai_eod_assistant.ui.voice import render_speech_controls
 
 
@@ -255,6 +255,7 @@ def render_workspace_monitor() -> None:
     default_path = str(Path.cwd())
     workspace_path = st.text_input("Workspace folder", value=st.session_state.get("workspace_path", default_path), key="workspace_path")
     since_date = st.date_input("Find files modified since", value=date.today(), key="workspace_since")
+    connector_url = st.text_input("Local connector URL", value=st.session_state.get("ollama_connector_url", "http://127.0.0.1:8765"), key="ollama_connector_url", help="Use the connector running on this computer, or a private VPN address for a hosted app.")
     with service_context() as service:
         tasks = service.active_tasks()
     task_options = {"No task selected": None, **{f"{task.title} (#{task.id})": task for task in tasks}}
@@ -262,7 +263,10 @@ def render_workspace_monitor() -> None:
     if st.button("Scan selected workspace", type="primary", icon=":material/folder_open:"):
         try:
             since = datetime.combine(since_date, time.min).astimezone()
-            changes = scan_workspace(workspace_path, since)
+            if connector_url.strip():
+                changes = scan_remote_workspace(connector_url, workspace_path, since)
+            else:
+                changes = scan_workspace(workspace_path, since)
             st.session_state["workspace_changes"] = changes
             st.session_state["workspace_evidence"] = format_workspace_evidence(changes)
         except (OSError, ValueError) as exc:

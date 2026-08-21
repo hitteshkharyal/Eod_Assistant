@@ -10,6 +10,8 @@ import subprocess
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib import error, request
 
+from ai_eod_assistant.processing.workspace import format_workspace_evidence, scan_workspace
+
 OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
 CONNECTOR_TOKEN = os.getenv("OLLAMA_CONNECTOR_TOKEN", "")
 
@@ -66,6 +68,26 @@ class ConnectorHandler(BaseHTTPRequestHandler):
         self._send(404, {"error": "Not found"})
 
     def do_POST(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler API.
+        if self.path == "/scan":
+            if CONNECTOR_TOKEN and self.headers.get("X-Connector-Token") != CONNECTOR_TOKEN:
+                self._send(401, {"error": "Invalid connector token"})
+                return
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+                changes = scan_workspace(
+                    str(payload.get("workspace_path", "")),
+                    __import__("datetime").datetime.fromisoformat(str(payload.get("since"))),
+                    int(payload.get("max_files", 200)),
+                )
+                self._send(200, {"changes": [
+                    {"workspace": str(item.workspace), "project_name": item.project_name, "relative_path": item.relative_path,
+                     "modified_at": item.modified_at.isoformat(), "language_hint": item.language_hint}
+                    for item in changes
+                ], "evidence": format_workspace_evidence(changes)})
+            except (ValueError, OSError, json.JSONDecodeError) as exc:
+                self._send(400, {"error": str(exc)})
+            return
         if self.path not in {"/generate", "/api/generate"}:
             self._send(404, {"error": "Not found"})
             return
