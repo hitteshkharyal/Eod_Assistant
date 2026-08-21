@@ -56,8 +56,9 @@ class UserInputRepository:
             "INSERT INTO user_inputs (timestamp, input_type, content, user_id) VALUES (?, ?, ?, ?) RETURNING id",
             (timestamp, input_type, cleaned_content, user_id),
         )
+        inserted_id = cursor.fetchone()["id"]
         self.connection.commit()
-        row = self.connection.execute("SELECT * FROM user_inputs WHERE id = ?", (cursor.fetchone()["id"],)).fetchone()
+        row = self.connection.execute("SELECT * FROM user_inputs WHERE id = ?", (inserted_id,)).fetchone()
         return _user_input_from_row(row)
 
     def add_text(self, content: str, user_id: int | None = None) -> UserInput:
@@ -93,8 +94,9 @@ class TaskRepository:
             "INSERT INTO tasks (created_at, title, description, team_id) VALUES (?, ?, ?, ?) RETURNING id",
             (utc_now().isoformat(), cleaned_title, description.strip(), team_id),
         )
+        inserted_id = cursor.fetchone()["id"]
         self.connection.commit()
-        row = self.connection.execute("SELECT * FROM tasks WHERE id = ?", (cursor.fetchone()["id"],)).fetchone()
+        row = self.connection.execute("SELECT * FROM tasks WHERE id = ?", (inserted_id,)).fetchone()
         return _task_from_row(row)
 
     def list_active(self, team_id: int | None = None) -> list[Task]:
@@ -118,8 +120,9 @@ class EODReportRepository:
             "INSERT INTO eod_reports (date, content, created_at, ai_provider, user_id) VALUES (?, ?, ?, ?, ?) RETURNING id",
             (report_date.isoformat(), content, created_at, ai_provider, user_id),
         )
+        inserted_id = cursor.fetchone()["id"]
         self.connection.commit()
-        row = self.connection.execute("SELECT * FROM eod_reports WHERE id = ?", (cursor.fetchone()["id"],)).fetchone()
+        row = self.connection.execute("SELECT * FROM eod_reports WHERE id = ?", (inserted_id,)).fetchone()
         return _report_from_row(row)
 
     def list_recent(self, limit: int = 20, user_id: int | None = None, team_id: int | None = None) -> list[EODReport]:
