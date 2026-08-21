@@ -13,6 +13,7 @@ from ai_eod_assistant.backend.eod_service import EODService
 from ai_eod_assistant.database.db import initialize_database
 from ai_eod_assistant.processing.context import build_text_evidence
 from ai_eod_assistant.ui.voice import build_report_summary
+from ai_eod_assistant.local_connector import detect_ollama
 
 
 class FakeProvider(AIProvider):

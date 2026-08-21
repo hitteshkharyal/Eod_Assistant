@@ -68,6 +68,25 @@ ollama pull llama3.2:3b
 
 The computer needs internet only for the initial Ollama/model download. After that, offline EOD generation works while Ollama is running. Offline voice transcription is not enabled for the default text-only model; use text activity in offline mode or select Online (Gemini) for audio transcription.
 
+## Local Ollama connector for the hosted app
+
+The Streamlit Cloud server cannot directly see Ollama on a user's computer. This repository includes a small local connector that detects Ollama and exposes the installed model list:
+
+```bash
+python -m ai_eod_assistant.local_connector
+```
+
+Check it locally:
+
+```text
+http://127.0.0.1:8765/health
+http://127.0.0.1:8765/models
+```
+
+The connector forwards `/generate` requests to the user's Ollama server. Keep it bound to `127.0.0.1` for local-only use. To let a private hosted deployment reach it, use a private VPN such as Tailscale and set `OLLAMA_CONNECTOR_HOST` to the private interface plus `OLLAMA_CONNECTOR_TOKEN` to a secret token. Do not expose this connector or Ollama directly to the public internet.
+
+The cloud app still saves the completed EOD to Supabase PostgreSQL. For the hosted Streamlit UI to invoke a user's connector, the connector URL must be reachable from the deployment through a private network, or a browser-side connector bridge must be added. A plain `127.0.0.1` URL entered in Streamlit Cloud points to the cloud server, not the user's computer.
+
 ## Deploy to Streamlit Community Cloud
 
 This is the recommended free hosting path for this Streamlit app.
