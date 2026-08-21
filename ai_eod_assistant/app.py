@@ -4,9 +4,15 @@ from __future__ import annotations
 from contextlib import contextmanager
 from datetime import date, datetime, time
 from pathlib import Path
+import sys
 from typing import Iterator
 
 import streamlit as st
+
+# Streamlit executes this file directly; add the repository root for package imports.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from ai_eod_assistant.auth import authenticate, change_password, create_member, create_team_admin, initialize_auth, recover_root_admin, team_members
 from ai_eod_assistant.ai.providers import build_provider
