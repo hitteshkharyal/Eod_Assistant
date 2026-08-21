@@ -1,6 +1,6 @@
 # AI EOD Assistant
 
-Phase 1 is an online MVP for preparing factual daily End-of-Day reports from explicit user-entered text.
+AI EOD Assistant is a multi-user Streamlit application for preparing factual daily End-of-Day reports from explicit, reviewed work evidence.
 
 ## What is included in Phase 1
 
@@ -140,18 +140,6 @@ Sign in, immediately change the admin password, create team leaders/members, and
 - Streamlit Cloud must use **Online (Gemini)**. It cannot reach Ollama installed on your Windows computer.
 - Supabase Free and Streamlit Community Cloud have quotas, sleep behavior, and possible inactivity pauses. Check their current limits before production use.
 
-## Free persistent cloud database
-
-For a shared Streamlit Cloud deployment, create a free Supabase project and copy its PostgreSQL connection string from **Connect -> Transaction pooler**. In Streamlit Cloud, open the app's **Settings -> Secrets** and add:
-
-```toml
-DATABASE_URL = "postgresql://postgres.[project-ref]:[PASSWORD]@[pooler-host]:6543/postgres?sslmode=require"
-GEMINI_API_KEY = "your-gemini-key"
-ADMIN_RECOVERY_KEY = "your-long-private-recovery-key"
-```
-
-Do not commit `DATABASE_URL` or passwords to GitHub. When `DATABASE_URL` is present, the app uses Supabase PostgreSQL; otherwise it uses local SQLite. The schema and seeded `admin` account are created automatically on first startup. The free Supabase tier is suitable for a 10-50 person team with normal EOD usage, subject to Supabase's current quotas and inactivity pause policy.
-
 The default model is `gemini-3.5-flash-lite`, a low-latency, cost-effective multimodal model. You can change `GEMINI_MODEL` in `.env` or Streamlit Secrets.
 
 ## Other hosting options
@@ -195,14 +183,8 @@ pytest
 
 Snapshot tests live in `ai_eod_assistant/tests/snapshots/` and verify the stable prompt/evidence/report contracts used by the backend service.
 
-## Future milestones
+## Current limitations
 
-- Phase 2: richer STT + voice input + TTS
-- Phase 3: PDF/DOCX/XLSX/TXT processing
-- Phase 4: Imported chat analysis
-- Phase 5: Local device activity monitoring
-- Phase 6: Activity grouping, project detection, confidence scoring
-- Phase 7: Advanced EOD generation
-- Phase 8: Offline local LLM
-- Phase 9: Online/offline provider switch
-- Phase 10: Windows packaging and optimization
+- The default offline model is text-only; voice transcription uses Gemini.
+- Streamlit Cloud cannot directly reach Ollama on a user's computer. Use Online (Gemini), or connect a local Ollama connector through a private network.
+- Workspace monitoring is opt-in and records file metadata only.
