@@ -38,7 +38,7 @@ Sign in as `admin` to add members to alpha or create a team leader for another t
 
 Admins have a read-only EOD history workspace with member, date, and text search filters. Search is applied when the filter form is submitted, so typing does not trigger a database query for every character. Admins can change passwords for accounts in their scope and permanently clear all saved EOD reports from Team administration. To recover the root admin, set a private `ADMIN_RECOVERY_KEY` in `.env` and use **Forgot root admin password** on the login screen. Newly authenticated accounts cannot see unowned legacy records or another member's records.
 
-## Setup
+## Local setup
 
 ```bash
 python -m venv .venv
@@ -68,6 +68,57 @@ ollama pull llama3.2:3b
 
 The computer needs internet only for the initial Ollama/model download. After that, offline EOD generation works while Ollama is running. Offline voice transcription is not enabled for the default text-only model; use text activity in offline mode or select Online (Gemini) for audio transcription.
 
+## Deploy to Streamlit Community Cloud
+
+This is the recommended free hosting path for this Streamlit app.
+
+### 1. Create the persistent database
+
+Create a free project at [Supabase](https://supabase.com/), open **Connect**, choose **Transaction pooler**, and copy the full PostgreSQL URI. Use the pooler URI, not the Supabase REST API URL. The URI normally uses port `6543` and includes `sslmode=require`.
+
+### 2. Create the Streamlit app
+
+1. Open [share.streamlit.io](https://share.streamlit.io/).
+2. Choose **New app** and repository `hitteshkharyal/Eod_Assistant`.
+3. Select branch `main`.
+4. Set the main file to `ai_eod_assistant/app.py`.
+5. Click **Deploy**.
+
+The repository already includes `requirements.txt` and `.streamlit/config.toml`, so Streamlit Cloud installs the dependencies and loads the theme automatically.
+
+### 3. Add secrets
+
+In the deployed app, open **Manage app -> Settings -> Secrets** and add TOML like this:
+
+```toml
+DATABASE_URL = "postgresql://postgres.[project-ref]:[PASSWORD]@[pooler-host]:6543/postgres?sslmode=require"
+GEMINI_API_KEY = "your-gemini-api-key"
+ADMIN_RECOVERY_KEY = "use-a-long-private-random-value"
+AI_MODE = "Online (Gemini)"
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+```
+
+Replace the placeholders with values from Supabase and Gemini. Do not paste secrets into source files or commit `.env`; `.env` and `.env.*` are ignored by Git.
+
+### 4. First login and verification
+
+On first startup, the app creates the PostgreSQL tables and seeds:
+
+```text
+Team: alpha
+User ID: admin
+Password: admin123
+```
+
+Sign in, immediately change the admin password, create team leaders/members, and generate a test EOD. Verify that a member sees only their own history and an admin sees only their team history. If the app sleeps, Supabase remains the persistent source for users and EOD reports.
+
+### Cloud deployment limitations
+
+- Streamlit Cloud can run the app for users on different networks.
+- Supabase PostgreSQL stores shared EOD history persistently; SQLite is only the local fallback.
+- Streamlit Cloud must use **Online (Gemini)**. It cannot reach Ollama installed on your Windows computer.
+- Supabase Free and Streamlit Community Cloud have quotas, sleep behavior, and possible inactivity pauses. Check their current limits before production use.
+
 ## Free persistent cloud database
 
 For a shared Streamlit Cloud deployment, create a free Supabase project and copy its PostgreSQL connection string from **Connect -> Transaction pooler**. In Streamlit Cloud, open the app's **Settings -> Secrets** and add:
@@ -80,7 +131,17 @@ ADMIN_RECOVERY_KEY = "your-long-private-recovery-key"
 
 Do not commit `DATABASE_URL` or passwords to GitHub. When `DATABASE_URL` is present, the app uses Supabase PostgreSQL; otherwise it uses local SQLite. The schema and seeded `admin` account are created automatically on first startup. The free Supabase tier is suitable for a 10-50 person team with normal EOD usage, subject to Supabase's current quotas and inactivity pause policy.
 
-The default model is `gemini-3.5-flash-lite`, a low-latency, cost-effective multimodal model. You can change `GEMINI_MODEL` in `.env`.
+The default model is `gemini-3.5-flash-lite`, a low-latency, cost-effective multimodal model. You can change `GEMINI_MODEL` in `.env` or Streamlit Secrets.
+
+## Other hosting options
+
+The app can also run on Railway, Render, Fly.io, or a small VPS. Use the same start command:
+
+```bash
+streamlit run ai_eod_assistant/app.py --server.address 0.0.0.0 --server.port $PORT
+```
+
+Configure the same environment variables as Streamlit Secrets, especially `DATABASE_URL`, `GEMINI_API_KEY`, and `ADMIN_RECOVERY_KEY`. Use a managed PostgreSQL database for shared history. Do not rely on local SQLite disk for a hosted multi-user deployment.
 
 ## Run
 
@@ -96,7 +157,7 @@ streamlit run ai_eod_assistant/app.py
 4. Optionally open **Workspace activity**, select a folder and task, and review the changed-file summary before saving it.
 5. Optionally import a reviewed activity summary from another application.
 6. Open **Generate EOD** and review the evidence block that will be sent to Gemini.
-7. Generate and save the report. Use **Speak report** to play it through the browser's local speech engine.
+7. Generate and save the report. Use **Speak summary** to play it through the browser's local speech engine.
 8. Open **EOD History** to review saved reports.
 
 ## Privacy and workspace activity
