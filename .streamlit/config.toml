@@ -1,0 +1,21 @@
+[theme]
+base = "light"
+primaryColor = "#087f8c"
+backgroundColor = "#f5fbfa"
+secondaryBackgroundColor = "#edf5f3"
+textColor = "#14343a"
+linkColor = "#087f8c"
+borderColor = "#cfe0dd"
+baseRadius = "small"
+buttonRadius = "small"
+font = "Aptos"
+headingFont = "Aptos Display"
+codeFont = "Cascadia Code"
+showWidgetBorder = true
+showSidebarBorder = false
+
+[theme.sidebar]
+backgroundColor = "#edf5f3"
+secondaryBackgroundColor = "#e1efec"
+textColor = "#14343a"
+primaryColor = "#087f8c"
