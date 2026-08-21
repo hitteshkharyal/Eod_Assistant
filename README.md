@@ -68,6 +68,18 @@ ollama pull llama3.2:3b
 
 The computer needs internet only for the initial Ollama/model download. After that, offline EOD generation works while Ollama is running. Offline voice transcription is not enabled for the default text-only model; use text activity in offline mode or select Online (Gemini) for audio transcription.
 
+## Free persistent cloud database
+
+For a shared Streamlit Cloud deployment, create a free Supabase project and copy its PostgreSQL connection string from **Connect -> Transaction pooler**. In Streamlit Cloud, open the app's **Settings -> Secrets** and add:
+
+```toml
+DATABASE_URL = "postgresql://postgres.[project-ref]:[PASSWORD]@[pooler-host]:6543/postgres?sslmode=require"
+GEMINI_API_KEY = "your-gemini-key"
+ADMIN_RECOVERY_KEY = "your-long-private-recovery-key"
+```
+
+Do not commit `DATABASE_URL` or passwords to GitHub. When `DATABASE_URL` is present, the app uses Supabase PostgreSQL; otherwise it uses local SQLite. The schema and seeded `admin` account are created automatically on first startup. The free Supabase tier is suitable for a 10-50 person team with normal EOD usage, subject to Supabase's current quotas and inactivity pause policy.
+
 The default model is `gemini-3.5-flash-lite`, a low-latency, cost-effective multimodal model. You can change `GEMINI_MODEL` in `.env`.
 
 ## Run

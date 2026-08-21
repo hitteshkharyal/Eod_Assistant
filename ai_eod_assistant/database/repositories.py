@@ -53,11 +53,11 @@ class UserInputRepository:
             raise ValueError("User input content cannot be empty.")
         timestamp = utc_now().isoformat()
         cursor = self.connection.execute(
-            "INSERT INTO user_inputs (timestamp, input_type, content, user_id) VALUES (?, ?, ?, ?)",
+            "INSERT INTO user_inputs (timestamp, input_type, content, user_id) VALUES (?, ?, ?, ?) RETURNING id",
             (timestamp, input_type, cleaned_content, user_id),
         )
         self.connection.commit()
-        row = self.connection.execute("SELECT * FROM user_inputs WHERE id = ?", (cursor.lastrowid,)).fetchone()
+        row = self.connection.execute("SELECT * FROM user_inputs WHERE id = ?", (cursor.fetchone()["id"],)).fetchone()
         return _user_input_from_row(row)
 
     def add_text(self, content: str, user_id: int | None = None) -> UserInput:
@@ -90,11 +90,11 @@ class TaskRepository:
         if not cleaned_title:
             raise ValueError("Task title cannot be empty.")
         cursor = self.connection.execute(
-            "INSERT INTO tasks (created_at, title, description, team_id) VALUES (?, ?, ?, ?)",
+            "INSERT INTO tasks (created_at, title, description, team_id) VALUES (?, ?, ?, ?) RETURNING id",
             (utc_now().isoformat(), cleaned_title, description.strip(), team_id),
         )
         self.connection.commit()
-        row = self.connection.execute("SELECT * FROM tasks WHERE id = ?", (cursor.lastrowid,)).fetchone()
+        row = self.connection.execute("SELECT * FROM tasks WHERE id = ?", (cursor.fetchone()["id"],)).fetchone()
         return _task_from_row(row)
 
     def list_active(self, team_id: int | None = None) -> list[Task]:
@@ -115,11 +115,11 @@ class EODReportRepository:
     def save(self, report_date: date, content: str, ai_provider: str, user_id: int | None = None) -> EODReport:
         created_at = utc_now().isoformat()
         cursor = self.connection.execute(
-            "INSERT INTO eod_reports (date, content, created_at, ai_provider, user_id) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO eod_reports (date, content, created_at, ai_provider, user_id) VALUES (?, ?, ?, ?, ?) RETURNING id",
             (report_date.isoformat(), content, created_at, ai_provider, user_id),
         )
         self.connection.commit()
-        row = self.connection.execute("SELECT * FROM eod_reports WHERE id = ?", (cursor.lastrowid,)).fetchone()
+        row = self.connection.execute("SELECT * FROM eod_reports WHERE id = ?", (cursor.fetchone()["id"],)).fetchone()
         return _report_from_row(row)
 
     def list_recent(self, limit: int = 20, user_id: int | None = None, team_id: int | None = None) -> list[EODReport]:
@@ -132,7 +132,7 @@ class EODReportRepository:
             scope = " WHERE user_id IN (SELECT id FROM users WHERE team_id = ?)"
             scope_value = (team_id,)
         rows = self.connection.execute(
-            f"SELECT eod_reports.*, users.username AS username FROM eod_reports LEFT JOIN users ON users.id = eod_reports.user_id{scope} ORDER BY created_at DESC LIMIT ?",
+            f"SELECT eod_reports.*, users.username AS username FROM eod_reports LEFT JOIN users ON users.id = eod_reports.user_id{scope} ORDER BY eod_reports.created_at DESC LIMIT ?",
             (*scope_value, limit),
         ).fetchall()
         return [_report_from_row(row) for row in rows]
